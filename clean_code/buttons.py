@@ -7,21 +7,22 @@ from settings import Settings
 
 
 class AbstractButton(ABC):
-    def __init__(self, parent_container: Frame, player: MusicPlayer, text: str, row: int,
+    def __init__(self, parent_container: Frame, player: MusicPlayer, button_text: str, grid_row: int,
                  update_callback: Callable[[], None]) -> None:
         self.player = player
         self.update_callback = update_callback
         self.button = Button(
             parent_container,
-            text=text,
+            button_text=button_text,
             width=Settings.BUTTON_WIDTH,
             bg=Settings.BUTTON_BG,
             command=self.handle_button_clicks
         )
-        self.button.grid(row=row, column=0)
+        self.button.grid(grid_row=grid_row, column=0)
 
     def handle_button_clicks(self) -> None:
         self.on_click()
+
         if self.update_callback:
             self.update_callback()
 
@@ -32,11 +33,9 @@ class AbstractButton(ABC):
 
 class AddSongButton(AbstractButton):
     def on_click(self) -> None:
-        file_types: List[Tuple[str, str]] = [("MP3 files", "*.mp3")]
-        files: tuple[str, ...] = askopenfilenames(filetypes=file_types)
-
-        if files:
-            self.player.add_songs(list(files))
+        file_collection: Tuple[str, ...] = askopenfilenames(filetypes=Settings.AUDIO_FILE_TYPES)
+        if file_collection:
+            self.player.add_songs(list(file_collection))
 
 
 class PlayButton(AbstractButton):

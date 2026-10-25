@@ -32,40 +32,47 @@ class FrameApp(Frame):
         PreviousSongButton(self, self.player, "PREVIOUS SONG", 4, self.refresh_ui)
         NextSongButton(self, self.player, "NEXT SONG", 5, self.refresh_ui)
 
-        self.label1 = Label(
+        self.song_display_label = Label(
             self,
             fg=Settings.LABEL_FG,
             bg=Settings.LABEL_BG,
             font=Settings.LABEL_FONT
         )
-        self.label1.grid(row=6, column=0)
+        self.song_display_label.grid(row=6, column=0)
 
-        self.text1 = Text(self, wrap=WORD, width=Settings.TEXT_WIDTH)
-        self.text1.grid(row=7, column=0)
+        self.playlist_display = Text(self, wrap=WORD, width=Settings.TEXT_WIDTH)
+        self.playlist_display.grid(row=7, column=0)
 
         self.monitor_playback()
 
     def refresh_ui(self) -> None:
-        self.update_label()
-        self.update_list()
+        self.refresh_current_song_display()
+        self.refresh_playlist_view()
 
-    def update_label(self) -> None:
-        self.label1['text'] = self.player.print_song_name()
+    def refresh_current_song_display(self) -> None:
+        current_song = self.player.get_current_song_name()
+        display_text = f"Now playing: {current_song}" if current_song else ""
+        self.song_display_label['text'] = display_text
 
-    def update_list(self) -> None:
-        self.text1.delete('1.0', END)
-        song_number = 1
-        for path in self.player.song_list:
-            self.text1.insert(END, str(song_number) + ' : ' + self.player.get_song_name(path) + '\n')
-            song_number += 1
+    def refresh_playlist_view(self) -> None:
+        self.clear_playlist_display()
+        self.populate_playlist_display()
+
+    def clear_playlist_display(self) -> None:
+        self.playlist_display.delete('1.0', END)
+
+    def populate_playlist_display(self) -> None:
+        for song_number, path in enumerate(self.player.song_list, start=1):
+            song_name = self.player.get_song_name(path)
+            self.playlist_display.insert(END, f"{song_number} : {song_name}\n")
 
     def monitor_playback(self) -> None:
         self.player.handle_song_completion()
-        self.update_label()
+        self.refresh_current_song_display()
         self.after(Settings.WAIT_TIME_MS, self.monitor_playback)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": #זה אומר לנו שזה הקובץ שמריצים. שאר הקבצים מיובאים מאימפורט
     window = Tk()
     window.geometry(f"{Settings.WINDOW_WIDTH}x{Settings.WINDOW_HEIGHT}")
     window.title(Settings.WINDOW_TITLE)
