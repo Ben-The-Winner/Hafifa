@@ -5,14 +5,11 @@ import os
 from pathlib import Path
 from typing import Dict, List
 
-from playwright.sync_api import Request, sync_playwright
+from playwright.sync_api import Request, Browser, sync_playwright
+from settings import Settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
-WAIT_TIMEOUT_MS = 60000
-INPUT_FILE = "urls.input"
-OUTPUT_DIR = "output"
 
 
 def load_urls(file_path: str) -> List[str]:
@@ -26,39 +23,39 @@ def load_urls(file_path: str) -> List[str]:
     return urls
 
 
-def process_url(browser, url: str, index: int) -> None:
-    folder = Path(OUTPUT_DIR) / f"url_{index}"
+def process_url(browser: Browser, url: str, index: int) -> None:
+    folder = Path(Settings.OUTPUT_DIR) / f"url_{index}"
     folder.mkdir(parents=True, exist_ok=True)
 
     page = browser.new_page()
-    resources: List[str] = []
+    requested_urls: List[str] = []
 
     def handle_request(request: Request) -> None:
-        resources.append(request.url)
+        requested_urls.append(request.url)
 
     page.on("request", handle_request)
 
     try:
         logger.info(f"Processing URL {index}: {url}")
-        page.goto(url, wait_until="networkidle", timeout=WAIT_TIMEOUT_MS)
+        page.goto(url, wait_until="domcontentloaded", timeout=Settings.WAIT_TIMEOUT_MS)
 
-        html_content = page.content()
+        html_content: str = page.content()
 
-        screenshot_path = folder / "screenshot.png"
+        screenshot_path = folder / Settings.SCREENSHOT_FILENAME
         page.screenshot(path=str(screenshot_path), full_page=True)
 
         with open(screenshot_path, "rb") as img_file:
-            screenshot_b64 = base64.b64encode(img_file.read()).decode("utf-8")
+            screenshot_b64: str = base64.b64encode(img_file.read()).decode("utf-8")
 
-        data: Dict[str, any] = {
+        scraping_content: Dict[str, any] = {
             "html": html_content,
-            "resources": resources,
+            "requested_urls": requested_urls,
             "screenshot": screenshot_b64,
         }
 
-        output_file = folder / "browse.json"
+        output_file = folder / Settings.OUTPUT_JSON_FILENAME
         with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+            json.dump(scraping_content, f, ensure_ascii=False, indent=2)
 
         logger.info(f"Successfully finished processing url_{index}")
 
@@ -70,16 +67,16 @@ def process_url(browser, url: str, index: int) -> None:
 
 
 def main() -> None:
-    urls = load_urls(INPUT_FILE)
+    urls = load_urls(Settings.INPUT_FILE)
     if not urls:
         logger.warning("No URLs found to process. Exiting.")
         return
 
     logger.info(f"Found {len(urls)} URLs to process.")
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(Settings.OUTPUT_DIR, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=Settings.HEADLESS_MODE)
 
         for i, url in enumerate(urls, start=1):
             process_url(browser, url, i)
