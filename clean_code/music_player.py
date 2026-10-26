@@ -64,7 +64,7 @@ class MusicPlayer:
 
     @ensure_playlist_not_empty
     def next_song(self) -> None:
-        next_index = self.current_song_index + 1
+        next_index = self.current_song_index + 1 % len(self.song_list)
         self.set_current_song_index(next_index)
 
     def set_current_song_index(self, index: int) -> None:
@@ -75,6 +75,10 @@ class MusicPlayer:
     @ensure_playlist_not_empty
     def previous_song(self) -> None:
         previous_index = self.current_song_index - 1
+
+        if self.current_song_index == 0:
+            previous_index = len(self.song_list) - 1
+
         self.set_current_song_index(previous_index)
 
     def is_playback_active(self) -> bool:
@@ -88,4 +92,5 @@ class MusicPlayer:
     def get_current_song_name(self) -> str:
         if not self.playing:
             return ""
+
         return self.get_song_name(self.song_list[self.current_song_index])
