@@ -34,6 +34,7 @@ class AbstractButton(ABC):
 class AddSongButton(AbstractButton):
     def on_click(self) -> None:
         file_collection: Tuple[str, ...] = askopenfilenames(filetypes=Settings.AUDIO_FILE_TYPES)
+
         if file_collection:
             self.player.add_songs(list(file_collection))
 
