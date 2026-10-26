@@ -21,7 +21,7 @@ class FrameApp(Frame):
 
         self.player = MusicPlayer(
             song_list=[],
-            current_index=0,
+            current_song_index=0,
             paused=False,
             playing=False
         )
@@ -72,7 +72,7 @@ class FrameApp(Frame):
         self.after(Settings.WAIT_TIME_MS, self.monitor_playback)
 
 
-if __name__ == "__main__": #זה אומר לנו שזה הקובץ שמריצים. שאר הקבצים מיובאים מאימפורט
+if __name__ == "__main__":  # זה אומר לנו שזה הקובץ שמריצים. שאר הקבצים מיובאים מאימפורט
     window = Tk()
     window.geometry(f"{Settings.WINDOW_WIDTH}x{Settings.WINDOW_HEIGHT}")
     window.title(Settings.WINDOW_TITLE)

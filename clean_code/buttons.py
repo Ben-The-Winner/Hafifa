@@ -13,12 +13,12 @@ class AbstractButton(ABC):
         self.update_callback = update_callback
         self.button = Button(
             parent_container,
-            button_text=button_text,
+            text=button_text,
             width=Settings.BUTTON_WIDTH,
             bg=Settings.BUTTON_BG,
             command=self.handle_button_clicks
         )
-        self.button.grid(grid_row=grid_row, column=0)
+        self.button.grid(row=grid_row, column=0)
 
     def handle_button_clicks(self) -> None:
         self.on_click()

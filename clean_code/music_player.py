@@ -3,6 +3,8 @@ from typing import List
 import logging
 from mutagen.easyid3 import EasyID3
 import pygame
+from functools import wraps
+from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,15 @@ class MusicPlayer:
         self.current_song_index: int = current_song_index
         self.paused: bool = paused
         self.playing: bool = playing
+
+    def ensure_playlist_not_empty(func: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(func)
+        def wrapper(self, *args, **kwargs) -> Any:
+            if not self.song_list:
+                return
+            return func(self, *args, **kwargs)
+
+        return wrapper
 
     def add_songs(self, files: List[str]) -> None:
         self.song_list.extend(files)
@@ -29,10 +40,8 @@ class MusicPlayer:
         except Exception:
             return path
 
+    @ensure_playlist_not_empty
     def play(self) -> None:
-        if len(self.song_list) == 0:
-            return
-
         pygame.mixer.music.load(self.song_list[self.current_song_index])
         pygame.mixer.music.play()
 
@@ -53,33 +62,30 @@ class MusicPlayer:
             self.paused = True
             logger.info("Music paused")
 
+    @ensure_playlist_not_empty
     def next_song(self) -> None:
-        if len(self.song_list) == 0:
-            return
-
-        next_index = self.player.current_index + 1
-        self.player.set_current_song_index(next_index)
+        next_index = self.current_song_index + 1
+        self.set_current_song_index(next_index)
 
     def set_current_song_index(self, index: int) -> None:
         if 0 <= index < len(self.song_list):
-            self.current_index = index
-            self.play_current_song()
+            self.current_song_index = index
+            self.play()
 
+    @ensure_playlist_not_empty
     def previous_song(self) -> None:
-        if len(self.song_list) == 0:
-            return
-
-        previous_index = self.player.current_index - 1
-        self.player.set_current_song_index(previous_index)
+        previous_index = self.current_song_index - 1
+        self.set_current_song_index(previous_index)
 
     def is_playback_active(self) -> bool:
         return pygame.mixer.music.get_busy()
 
     def handle_song_completion(self) -> None:
-        if self.playing and not self.paused and not is_playback_active():
+        if self.playing and not self.paused and not self.is_playback_active():
             self.next_song()
 
+    @ensure_playlist_not_empty
     def get_current_song_name(self) -> str:
-        if not self.playing or not self.song_list:
+        if not self.playing:
             return ""
         return self.get_song_name(self.song_list[self.current_song_index])
