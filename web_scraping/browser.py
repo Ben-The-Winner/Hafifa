@@ -112,7 +112,7 @@ def main() -> None:
     logger.info(f"Found {len(urls)} URLs to process.")
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+        browser = playwright.chromium.launch(headless=Settings.HEADLESS_MODE)
 
         try:
             for index, url in enumerate(urls, start=1):
